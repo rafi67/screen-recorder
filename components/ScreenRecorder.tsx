@@ -185,7 +185,7 @@ const ScreenRecorder = () => {
         )}
 
         {mediaBlob && (
-          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium flex justify-center items-center gap-2 disabled:hover:bg-emerald-600">
+          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium flex justify-center items-center gap-2 disabled:opacity-50">
             {isUploading ? (
               <Loader2 className="animate-spin w-5 h-5" />
             ) : (
