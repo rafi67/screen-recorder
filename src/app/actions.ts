@@ -22,6 +22,17 @@ export async function createUploadUrl() {
             },
           ],
         },
+        {
+          url: "https://cdn-icons-png.flaticon.com/512/4208/4208366.png",
+          overlay_settings: {
+            vertical_align: "top",
+            vertical_margin: "20px",
+            horizontal_align: "right",
+            horizontal_margin: "20px",
+            width: "150px",
+            opacity: "80%",
+          },
+        },
       ],
     },
     cors_origin: "*",
