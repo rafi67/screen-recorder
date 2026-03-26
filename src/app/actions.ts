@@ -3,6 +3,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Mux from "@mux/mux-node";
 import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID,
@@ -14,7 +15,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 export async function createUploadUrl() {
   const upload = await mux.video.uploads.create({
     new_asset_settings: {
-      playback_policy: ["public"],
+      playback_policy: ["signed"],
       video_quality: "plus",
       mp4_support: "standard",
       input: [
@@ -138,7 +139,6 @@ export async function generateVideoSummary(playbackId: string) {
       throw new Error("Asset not found");
     }
 
-    
     const { transcript } = await getAssetStatus(playbackId);
 
     const transcriptText = transcript.map((item) => item.text).join(" ");
@@ -186,4 +186,29 @@ export async function generateVideoSummary(playbackId: string) {
 export async function getCurrentUser() {
   const cookieStore = await cookies();
   return cookieStore.get("user")?.value || null;
+}
+
+export async function getSignedPlaybackToken(playbackId: string) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const privateKey = Buffer.from(
+    process.env.MUX_SIGNING_KEY_PRIVATE!,
+    "base64",
+  ).toString("ascii");
+
+  const token = jwt.sign(
+    {
+      sub: playbackId,
+      aud: "v",
+      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+    },
+    privateKey,
+    { algorithm: "RS256" },
+  );
+
+  return token;
 }
