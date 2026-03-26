@@ -1,5 +1,6 @@
 "use server";
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import Mux from "@mux/mux-node";
 import { cookies } from "next/headers";
 
@@ -7,6 +8,8 @@ const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID,
   tokenSecret: process.env.MUX_TOKEN_SECRET,
 });
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function createUploadUrl() {
   const upload = await mux.video.uploads.create({
@@ -135,16 +138,44 @@ export async function generateVideoSummary(playbackId: string) {
       throw new Error("Asset not found");
     }
 
-    const { getSummaryAndTags } = await import("@mux/ai/workflows");
+    
+    const { transcript } = await getAssetStatus(playbackId);
 
-    const result = await getSummaryAndTags(asset.id, {
-      tone: "professional",
+    const transcriptText = transcript.map((item) => item.text).join(" ");
+
+    // 3️ Gemini model
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash", // free-tier friendly
     });
 
+    // 4️ Prompt
+    const prompt = `
+    Generate a professional video title, summary, and tags.
+
+    Transcript:
+    ${transcriptText}
+
+    Return ONLY valid JSON:
+    {
+      "title": "string",
+      "summary": "string",
+      "tags": ["tag1", "tag2", "tag3"]
+    }
+    `;
+
+    // 5️ Call Gemini
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    // 6️ Clean response (Gemini often wraps JSON)
+    const cleaned = text.replace(/```json|```/g, "").trim();
+
+    const parsed = JSON.parse(cleaned);
+
     return {
-      title: result.title,
-      summary: result.description,
-      tags: result.tags,
+      title: parsed.title,
+      summary: parsed.summary,
+      tags: parsed.tags,
     };
   } catch (e) {
     console.error("Error generating summary:", e);
