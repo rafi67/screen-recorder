@@ -1,6 +1,7 @@
 "use server";
 
 import Mux from "@mux/mux-node";
+import { cookies } from "next/headers";
 
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID,
@@ -149,4 +150,9 @@ export async function generateVideoSummary(playbackId: string) {
     console.error("Error generating summary:", e);
     return null;
   }
+}
+
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  return cookieStore.get("user")?.value || null;
 }
