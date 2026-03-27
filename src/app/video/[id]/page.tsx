@@ -42,7 +42,7 @@ export default async function VideoPage({
           <div className="bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800 aspect-video relative">
             {isVideoReady ? (
               <>
-                <MuxPlayerWrapper playbackId={playbackId} />
+                <MuxPlayerWrapper playbackId={playbackId} token={token} />
                 {!isTranscriptReady && (
                   <VideoStatusPoller id={playbackId} isVideoReady={true} />
                 )}
